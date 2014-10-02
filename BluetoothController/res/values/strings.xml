@@ -15,5 +15,7 @@
     <string name="label_make_discoverable">Make discoverable</string>
     <string name="label_start_server">Start server</string>
     <string name="label_stop_server">Stop server</string>
+    <string name="label_send">Send</string>
+    <string name="error_please_enter_a_message">Please enter a message!</string>
 
 </resources>
