@@ -27,6 +27,13 @@
         android:layout_height="wrap_content"
         android:text="@string/label_start_server" />
 
+    <Button
+        android:id="@+id/buttonCloseConnection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="@string/label_close_connection" />
+
     <FrameLayout
         android:id="@+id/container"
         android:layout_width="match_parent"

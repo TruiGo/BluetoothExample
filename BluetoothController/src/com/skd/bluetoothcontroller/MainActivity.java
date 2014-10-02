@@ -29,24 +29,16 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.skd.bluetoothcontroller.communication.ReadThread;
-import com.skd.bluetoothcontroller.communication.WriteThread;
+import com.skd.bluetoothcontroller.communication.CommunicationThread;
 import com.skd.bluetoothcontroller.connection.ClientSocketConnectionThread;
 import com.skd.bluetoothcontroller.connection.ConnectionThread.SocketConnectionListener;
 import com.skd.bluetoothcontroller.connection.ServerSocketConnectionThread;
 import com.skd.bluetoothcontroller.entity.BtMessage;
-import com.skd.bluetoothcontroller.fragments.ClientFragment;
-import com.skd.bluetoothcontroller.fragments.ServerFragment;
+import com.skd.bluetoothcontroller.fragments.MessageFragment;
 
 public class MainActivity extends Activity implements OnClickListener, Messenger {
 	
 	private class DefaultConnectionListener implements SocketConnectionListener {
-		
-		private boolean mIsServer;
-		
-		public DefaultConnectionListener(boolean mIsServer) {
-			this.mIsServer = mIsServer;
-		}
 
 		@Override
 		public void onSocketConnectionFailed(final String message) {
@@ -68,11 +60,7 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 					mProgressDialog.hide();
 					mSocket = socket;
 					
-					if(mIsServer){
-						onServerConnectionEstablished(socket);
-					} else {
-						onClientConnectionEstablished(socket);
-					}
+					onClientConnectionEstablished(socket);
 				}
 			});
 		}
@@ -81,18 +69,20 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	@SuppressWarnings("unused")
 	private final static String tag = MainActivity.class.getSimpleName();
 	
+	private final static String END_SESSION_REQUEST = "*END*";
+	
 	private final static int REQUEST_ENABLE_BT = 9001;
 	private final static int REQUEST_ENABLE_DISCOVER = 9002;
 
 	private Button mButtonSwitchBluetooth;
 	private Button mButtonUseAsClient; 
 	private Button mButtonUseAsServer;
+	private Button mButtonCloseConnection;
 
 	private BluetoothAdapter mBtAdapter;
 
 	private boolean mBluetoothEnabled;
-	private boolean mIsClient;
-	private boolean mIsServer;
+	private boolean mIsConnected;
 	
 	private IntentFilter mBluetoothEventsFilter;
 	private ProgressDialog mProgressDialog;
@@ -103,8 +93,7 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	
 	private IncomingMessageHandler mIncomingMessageHandler;
 
-	private ReadThread mThreadRead;
-	private WriteThread mThreadWrite;
+	private CommunicationThread mCommunicationThread;
 	
 	private BroadcastReceiver mBtEventsReceiver = new BroadcastReceiver() {
 
@@ -139,7 +128,10 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 			Messenger messenger = mMessenger.get();
 			if(messenger != null){
 				String message = (String) msg.obj;
-				messenger.notifySubscribers(new BtMessage(message));
+				messenger.notifySubscribers(new BtMessage(message, false));
+				if(message.equals(END_SESSION_REQUEST)){
+					messenger.onEndSessionRequest();
+				}
 			}
 		}
 	}
@@ -166,6 +158,9 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 
 		mButtonUseAsServer = (Button) findViewById(R.id.buttonUseAsServer);
 		mButtonUseAsServer.setOnClickListener(this);
+		
+		mButtonCloseConnection = (Button) findViewById(R.id.buttonCloseConnection);
+		mButtonCloseConnection.setOnClickListener(this);
 		
 		mProgressDialog = new ProgressDialog(this);
 		
@@ -204,14 +199,9 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 
 	private void updateViews() {
 		mButtonSwitchBluetooth.setVisibility(mBluetoothEnabled ? View.GONE : View.VISIBLE);
-		mButtonUseAsClient.setVisibility(mBluetoothEnabled && !mIsServer ? View.VISIBLE : View.GONE);
-		mButtonUseAsServer.setVisibility(mBluetoothEnabled && !mIsClient ? View.VISIBLE : View.GONE);
-		
-		int clientButton = mIsClient ? R.string.label_stop_client: R.string.label_start_client;
-		mButtonUseAsClient.setText(clientButton);
-		
-		int serverButton = mIsServer ? R.string.label_stop_server : R.string.label_start_server;
-		mButtonUseAsServer.setText(serverButton);
+		mButtonUseAsClient.setVisibility(mBluetoothEnabled && !mIsConnected ? View.VISIBLE : View.GONE);
+		mButtonUseAsServer.setVisibility(mBluetoothEnabled && !mIsConnected ? View.VISIBLE : View.GONE);
+		mButtonCloseConnection.setVisibility(mIsConnected ? View.VISIBLE : View.GONE);
 	}
 
 	@Override
@@ -226,6 +216,9 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 			case R.id.buttonUseAsServer:
 				becomeServer();
 				break;
+			case R.id.buttonCloseConnection:
+				closeCurrentSession();
+				break;
 		}
 	}
 
@@ -234,13 +227,16 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	}
 
 	private void becomeClient() {
-		if(!mIsClient){
-			mBtAdapter.startDiscovery();
-		} else {
-			discardConnection();
-			mIsClient = false;
-			updateViews();
-		}
+		mBtAdapter.startDiscovery();
+	}
+	
+	private void becomeServer() {
+		requestDiscoverable();
+	}
+	
+	private void closeCurrentSession(){
+		mCommunicationThread.addMessageToQueue(END_SESSION_REQUEST);
+		discardConnection();
 	}
 	
 	private void onDiscoverDevicesFinished(){
@@ -274,7 +270,7 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	private void connectWithServer(BluetoothDevice server){
 		mProgressDialog.setMessage(getString(R.string.progress_connecting));
 		mProgressDialog.show();
-		new ClientSocketConnectionThread(server, new DefaultConnectionListener(false)).start();
+		new ClientSocketConnectionThread(server, new DefaultConnectionListener()).start();
 	}
 
 	@Override
@@ -292,18 +288,8 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 		updateViews();
 	}
 
-	private void becomeServer() {
-		if(!mIsServer){
-			requestDiscoverable();
-		} else {
-			discardConnection();
-			mIsServer = false;
-			updateViews();
-		}
-	}
-	
 	private void onDiscoverAllowed(){
-		final ServerSocketConnectionThread connectionThread = new ServerSocketConnectionThread(mBtAdapter, new DefaultConnectionListener(true));
+		final ServerSocketConnectionThread connectionThread = new ServerSocketConnectionThread(mBtAdapter, new DefaultConnectionListener());
 		connectionThread.start();
 
 		OnCancelListener cancelListener = new OnCancelListener() {
@@ -327,8 +313,8 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 
 	@Override
 	public void sendMessage(String message) {
-		if(mThreadWrite != null){
-			mThreadWrite.addMessageToQueue(message);
+		if(mCommunicationThread != null){
+			mCommunicationThread.addMessageToQueue(message);
 		}
 	}
 
@@ -369,30 +355,13 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 
 	private void onClientConnectionEstablished(BluetoothSocket socket){
 		try {
-			mIsServer = false;
-			mIsClient = true;
+			mIsConnected = true;
 			updateViews();
 			
-			loadFragment(new ClientFragment());
+			loadFragment(new MessageFragment());
 			
-			mThreadWrite = new WriteThread(mSocket);
-			mThreadWrite.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-		}
-	}
-	
-	private void onServerConnectionEstablished(BluetoothSocket socket){
-		try {
-			mIsServer = true;
-			mIsClient = false;
-			updateViews();
-			
-			loadFragment(new ServerFragment());
-			
-			mThreadRead = new ReadThread(mSocket, mIncomingMessageHandler);
-			mThreadRead.start();
+			mCommunicationThread = new CommunicationThread(socket, mIncomingMessageHandler);
+			mCommunicationThread.start();
 		} catch (IOException e) {
 			e.printStackTrace();
 			Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -400,12 +369,11 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	}
 	
 	private void discardConnection(){
-		if(mThreadWrite != null){
-			mThreadWrite.interrupt();
-		}
+		mIsConnected = false;
+		updateViews();
 		
-		if(mThreadRead != null){
-			mThreadRead.interrupt();
+		if(mCommunicationThread != null){
+			mCommunicationThread.interrupt();
 		}
 		
 		if(mSocket != null && mSocket.isConnected()){
@@ -415,5 +383,12 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 				e.printStackTrace();
 			}
 		}
+		
+		getFragmentManager().popBackStack();
+	}
+
+	@Override
+	public void onEndSessionRequest() {
+		discardConnection();
 	}
 }

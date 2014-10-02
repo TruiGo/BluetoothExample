@@ -8,10 +8,12 @@ public class BtMessage {
 
 	private String mMessage;
 	private String mSentAt;
+	private boolean mMy;
 	
-	public BtMessage(String mMessage) {
-		this.mMessage = mMessage;
-		this.mSentAt = DateFormat.format("dd.MM.yyyy hh:mm:ss", Calendar.getInstance()).toString();
+	public BtMessage(String message, boolean my) {
+		mMessage = message;
+		mMy = my;
+		mSentAt = DateFormat.format("dd.MM.yyyy hh:mm:ss", Calendar.getInstance()).toString();
 	}
 
 	public String getMessage() {
@@ -20,5 +22,9 @@ public class BtMessage {
 
 	public String getSentAt() {
 		return mSentAt;
+	}
+
+	public boolean isMy() {
+		return mMy;
 	}
 }

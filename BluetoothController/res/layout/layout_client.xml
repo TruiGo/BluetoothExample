@@ -9,6 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
+        android:gravity="left|top"
         android:inputType="textMultiLine"
         android:lines="5" />
 
@@ -17,5 +18,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/label_send" />
+
+    <ListView
+        android:id="@+id/listMessages"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+    </ListView>
 
 </LinearLayout>

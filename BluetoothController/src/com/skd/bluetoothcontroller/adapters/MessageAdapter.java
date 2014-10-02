@@ -3,10 +3,12 @@ package com.skd.bluetoothcontroller.adapters;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.skd.bluetoothcontroller.R;
@@ -18,10 +20,12 @@ public class MessageAdapter extends BaseAdapter {
 		
 		TextView mTextMessage;
 		TextView mTextSentAt;
+		LinearLayout mLayout;
 		
 		public ViewHolder(View view) {
 			mTextMessage = (TextView) view.findViewById(R.id.textMessageText);
 			mTextSentAt = (TextView) view.findViewById(R.id.textSentAt);
+			mLayout = (LinearLayout) view.findViewById(R.id.layoutMessageItem);
 		}
 	}
 	
@@ -62,6 +66,7 @@ public class MessageAdapter extends BaseAdapter {
 		
 		holder.mTextMessage.setText(message.getMessage());
 		holder.mTextSentAt.setText(message.getSentAt());
+		holder.mLayout.setBackgroundColor(message.isMy() ? Color.GREEN : Color.RED);
 		
 		return convertView;
 	}
