@@ -1,0 +1,43 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.skd.bluetoothcontroller.MainActivity" >
+
+    <Button
+        android:id="@+id/buttonSwitchBluetooth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_enable" />
+
+    <Button
+        android:id="@+id/buttonScanDevices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_start_scan"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/buttonSwitchController"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_start_play" />
+
+    <Button
+        android:id="@+id/buttonStartServer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_start_server" />
+
+    <ListView
+        android:id="@+id/listDevices"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+    </ListView>
+
+</LinearLayout>
