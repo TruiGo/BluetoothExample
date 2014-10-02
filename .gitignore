@@ -65,3 +65,4 @@ build/
 android/crashlytics.properties
 
 Curve/
+gen/
