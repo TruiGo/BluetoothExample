@@ -8,7 +8,5 @@ public interface Messenger {
 	void subscribe(MessageSubscriber subscriber);
 	void unsubscribe(MessageSubscriber subscriber);
 	void notifySubscribers(BtMessage message);
-	void serverDisconnected();
-	void clientDisconnected();
 	
 }

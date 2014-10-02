@@ -38,12 +38,6 @@ public class ReadThread extends CommunicationThread {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 		}
 		
 		Log.d(tag, "Read thread was interrupted - closing stream.");

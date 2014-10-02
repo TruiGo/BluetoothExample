@@ -44,10 +44,10 @@ public final class R {
         public static final int label_enable=0x7f050005;
         public static final int label_make_discoverable=0x7f050008;
         public static final int label_send=0x7f05000b;
-        public static final int label_start_play=0x7f050003;
+        public static final int label_start_client=0x7f050003;
         public static final int label_start_scan=0x7f050007;
         public static final int label_start_server=0x7f050009;
-        public static final int label_stop_play=0x7f050004;
+        public static final int label_stop_client=0x7f050004;
         public static final int label_stop_server=0x7f05000a;
         public static final int progress_connecting=0x7f05000e;
         public static final int progress_discovering=0x7f05000c;

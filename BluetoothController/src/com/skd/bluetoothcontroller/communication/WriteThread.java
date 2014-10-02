@@ -40,12 +40,6 @@ public class WriteThread extends CommunicationThread {
 					e.printStackTrace();
 				}
 			}
-
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 		}
 
 		Log.i(tag, "Write thread was interrupted - close stream.");

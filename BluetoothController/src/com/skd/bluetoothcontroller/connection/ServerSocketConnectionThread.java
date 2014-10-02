@@ -10,6 +10,7 @@ public class ServerSocketConnectionThread extends ConnectionThread {
 
 	private BluetoothServerSocket mServerSocket;
 	private SocketConnectionListener mListener;
+	private transient boolean mWasCancelled;
 	
 	public ServerSocketConnectionThread(BluetoothAdapter adapter, SocketConnectionListener socketConnectionListener) {
 		mListener = socketConnectionListener;
@@ -28,18 +29,23 @@ public class ServerSocketConnectionThread extends ConnectionThread {
 				BluetoothSocket socket = mServerSocket.accept();
 				if(socket != null) {
 					mListener.onSocketAcquired(socket);
-//					mServerSocket.close();
+					mServerSocket.close();
 					break;
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
-				mListener.onSocketConnectionFailed(e.getMessage());
+				if(!mWasCancelled){
+					e.printStackTrace();
+					mListener.onSocketConnectionFailed(e.getMessage());
+				} else {
+					mListener.onSocketConnectionFailed(null);
+				}
 				break;
 			}
 		}
 	}
 	
-	public void cancel(){
+	public synchronized void cancel(){
+		mWasCancelled = true;
 		try {
 			mServerSocket.close();
 		} catch (IOException e) {

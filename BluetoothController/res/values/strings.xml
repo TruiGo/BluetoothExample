@@ -5,8 +5,8 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
 
-    <string name="label_start_play">Become client</string>
-    <string name="label_stop_play">Stop client</string>
+    <string name="label_start_client">Become client</string>
+    <string name="label_stop_client">Stop client</string>
     <string name="label_enable">Enable bluetooth</string>
     <string name="label_disable">Disable bluetooth</string>
     <string name="label_start_scan">Start scan</string>

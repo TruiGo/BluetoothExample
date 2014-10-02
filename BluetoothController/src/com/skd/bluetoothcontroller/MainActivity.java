@@ -17,12 +17,13 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -52,7 +53,9 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 			runOnUiThread(new Runnable() {
 				public void run() {
 					mProgressDialog.hide();
-					Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+					if(!TextUtils.isEmpty(message)){
+						Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+					}
 				}
 			});
 		}
@@ -201,8 +204,14 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 
 	private void updateViews() {
 		mButtonSwitchBluetooth.setVisibility(mBluetoothEnabled ? View.GONE : View.VISIBLE);
-		mButtonUseAsClient.setVisibility(mBluetoothEnabled ? View.VISIBLE : View.GONE);
-		mButtonUseAsServer.setVisibility(mBluetoothEnabled ? View.VISIBLE : View.GONE);
+		mButtonUseAsClient.setVisibility(mBluetoothEnabled && !mIsServer ? View.VISIBLE : View.GONE);
+		mButtonUseAsServer.setVisibility(mBluetoothEnabled && !mIsClient ? View.VISIBLE : View.GONE);
+		
+		int clientButton = mIsClient ? R.string.label_stop_client: R.string.label_start_client;
+		mButtonUseAsClient.setText(clientButton);
+		
+		int serverButton = mIsServer ? R.string.label_stop_server : R.string.label_start_server;
+		mButtonUseAsServer.setText(serverButton);
 	}
 
 	@Override
@@ -225,7 +234,13 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	}
 
 	private void becomeClient() {
-		mBtAdapter.startDiscovery();
+		if(!mIsClient){
+			mBtAdapter.startDiscovery();
+		} else {
+			discardConnection();
+			mIsClient = false;
+			updateViews();
+		}
 	}
 	
 	private void onDiscoverDevicesFinished(){
@@ -278,25 +293,36 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	}
 
 	private void becomeServer() {
-		requestDiscoverable();
+		if(!mIsServer){
+			requestDiscoverable();
+		} else {
+			discardConnection();
+			mIsServer = false;
+			updateViews();
+		}
 	}
 	
 	private void onDiscoverAllowed(){
+		final ServerSocketConnectionThread connectionThread = new ServerSocketConnectionThread(mBtAdapter, new DefaultConnectionListener(true));
+		connectionThread.start();
+
+		OnCancelListener cancelListener = new OnCancelListener() {
+			
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				connectionThread.cancel();
+			}
+		};
+		
+		mProgressDialog.setOnCancelListener(cancelListener);
 		mProgressDialog.setMessage(getString(R.string.progress_waiting_for_connection));
 		mProgressDialog.show();
-		new ServerSocketConnectionThread(mBtAdapter, new DefaultConnectionListener(true)).start();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if(mSocket != null && mSocket.isConnected()){
-			try {
-				mSocket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		discardConnection();
 	}
 
 	@Override
@@ -322,7 +348,6 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 
 	@Override
 	public void notifySubscribers(com.skd.bluetoothcontroller.entity.BtMessage message) {
-		Log.d(tag, "notify subscribers");
 		for(Iterator<MessageSubscriber> iterator = mSubscribers.iterator(); iterator.hasNext(); ){
 			iterator.next().onMessageReceived(message);
 		}
@@ -344,7 +369,12 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 
 	private void onClientConnectionEstablished(BluetoothSocket socket){
 		try {
+			mIsServer = false;
+			mIsClient = true;
+			updateViews();
+			
 			loadFragment(new ClientFragment());
+			
 			mThreadWrite = new WriteThread(mSocket);
 			mThreadWrite.start();
 		} catch (IOException e) {
@@ -355,7 +385,12 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 	
 	private void onServerConnectionEstablished(BluetoothSocket socket){
 		try {
+			mIsServer = true;
+			mIsClient = false;
+			updateViews();
+			
 			loadFragment(new ServerFragment());
+			
 			mThreadRead = new ReadThread(mSocket, mIncomingMessageHandler);
 			mThreadRead.start();
 		} catch (IOException e) {
@@ -363,16 +398,22 @@ public class MainActivity extends Activity implements OnClickListener, Messenger
 			Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
 		}
 	}
-
-	@Override
-	public void serverDisconnected() {
-		// TODO Auto-generated method stub
+	
+	private void discardConnection(){
+		if(mThreadWrite != null){
+			mThreadWrite.interrupt();
+		}
 		
-	}
-
-	@Override
-	public void clientDisconnected() {
-		// TODO Auto-generated method stub
+		if(mThreadRead != null){
+			mThreadRead.interrupt();
+		}
 		
+		if(mSocket != null && mSocket.isConnected()){
+			try {
+				mSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
