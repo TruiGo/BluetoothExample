@@ -10,7 +10,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.skd.bluetoothcontroller.R;
-import com.skd.bluetoothcontroller.entity.Message;
+import com.skd.bluetoothcontroller.entity.BtMessage;
 
 public class MessageAdapter extends BaseAdapter {
 	
@@ -25,13 +25,13 @@ public class MessageAdapter extends BaseAdapter {
 		}
 	}
 	
-	private List<Message> mMessages;
+	private List<BtMessage> mMessages;
 	
 	public MessageAdapter() {
-		mMessages = new ArrayList<Message>();
+		mMessages = new ArrayList<BtMessage>();
 	}
 	
-	public void addMessage(Message message){
+	public void addMessage(BtMessage message){
 		mMessages.add(message);
 		notifyDataSetChanged();
 	}
@@ -42,7 +42,7 @@ public class MessageAdapter extends BaseAdapter {
 	}
 
 	@Override
-	public Message getItem(int position) {
+	public BtMessage getItem(int position) {
 		return mMessages.get(position);
 	}
 
@@ -58,7 +58,7 @@ public class MessageAdapter extends BaseAdapter {
 		}
 		
 		ViewHolder holder = (ViewHolder) convertView.getTag();
-		Message message = getItem(position);
+		BtMessage message = getItem(position);
 		
 		holder.mTextMessage.setText(message.getMessage());
 		holder.mTextSentAt.setText(message.getSentAt());

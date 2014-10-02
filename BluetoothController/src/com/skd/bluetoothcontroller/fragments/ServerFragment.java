@@ -3,13 +3,16 @@ package com.skd.bluetoothcontroller.fragments;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.skd.bluetoothcontroller.MessageSubscriber;
 import com.skd.bluetoothcontroller.Messenger;
 import com.skd.bluetoothcontroller.adapters.MessageAdapter;
-import com.skd.bluetoothcontroller.entity.Message;
+import com.skd.bluetoothcontroller.entity.BtMessage;
 
 public class ServerFragment extends ListFragment implements MessageSubscriber {
+	
+	private final static String tag = ServerFragment.class.getSimpleName();
 
 	private Messenger mMessenger;
 	private MessageAdapter mAdapter;
@@ -44,7 +47,9 @@ public class ServerFragment extends ListFragment implements MessageSubscriber {
 	}
 
 	@Override
-	public void onMessageReceived(Message message) {
+	public void onMessageReceived(BtMessage message) {
+		Log.d(tag, "On message received!");
 		mAdapter.addMessage(message);
+		setListShown(true);
 	}
 }

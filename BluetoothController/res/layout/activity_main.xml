@@ -16,28 +16,20 @@
         android:text="@string/label_enable" />
 
     <Button
-        android:id="@+id/buttonScanDevices"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/label_start_scan"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/buttonSwitchController"
+        android:id="@+id/buttonUseAsClient"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/label_start_play" />
 
     <Button
-        android:id="@+id/buttonStartServer"
+        android:id="@+id/buttonUseAsServer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/label_start_server" />
 
-    <ListView
-        android:id="@+id/listDevices"
+    <FrameLayout
+        android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-    </ListView>
+        android:layout_height="match_parent" />
 
 </LinearLayout>

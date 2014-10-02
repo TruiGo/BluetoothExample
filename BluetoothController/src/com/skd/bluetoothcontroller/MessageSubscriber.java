@@ -1,9 +1,9 @@
 package com.skd.bluetoothcontroller;
 
-import com.skd.bluetoothcontroller.entity.Message;
+import com.skd.bluetoothcontroller.entity.BtMessage;
 
 public interface MessageSubscriber {
 
-	void onMessageReceived(Message message);
+	void onMessageReceived(BtMessage message);
 	
 }
